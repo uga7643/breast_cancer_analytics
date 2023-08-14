@@ -9,7 +9,8 @@ from sklearn.preprocessing import  StandardScaler, MinMaxScaler
 
 # 次元削減
 from sklearn.decomposition import PCA
-
+from sklearn.decomposition import IncrementalPCA
+from sklearn.decomposition import SparsePCA
 import config
 
 """
@@ -94,5 +95,67 @@ class PCAAsDataFrame(BaseEstimator, TransformerMixin):
         print(
             "loadings: {0}, score: {1}, 寄与率: {2}, 累積寄与率: {3} ".format(
                 loadings, score, contribution_ratios, cumulative_contribution_ratios
+            )
+        )
+        
+# IncrementalPCAで次元削減を行うクラス
+class IncrementalPCAAsDataFrame(BaseEstimator, TransformerMixin):
+    def __init__(self, selector=None, n_components:float=0.95):
+        self.selector = selector
+        self.incrementalpca = IncrementalPCA(n_components=n_components, random_state=config.SEED)
+
+    def fit(self, X, y=None):
+        self.incrementalpca.fit(X)
+        return self
+
+    def transform(self, X):
+        return pd.DataFrame(
+            self.incrementalpca.transform(X),
+            index=X.index,
+            columns=self.incrementalpca.get_feature_names_out(),
+        )
+
+    def show_progress(self, X):
+        # 主成分負荷量の計算と表示
+        loadings = pd.DataFrame(self.incrementalpca.components_.T, index=X.columns)
+        # 主成分スコアの計算
+        score = pd.DataFrame(self.incrementalpca.transform(X), index=X.index)
+        # 寄与率:各主成分がどれくらいデータを説明できているのかを表す指標
+        contribution_ratios = pd.DataFrame(self.incrementalpca.explained_variance_ratio_)
+        # 累積寄与率:この寄与率を累積して,ある寄与率に達するまでには第何主成分までが必要かを見ることが多い
+        cumulative_contribution_ratios = contribution_ratios.cumsum()
+        
+        print(
+            "loadings: {0}, score: {1}, 寄与率: {2}, 累積寄与率: {3} ".format(
+                loadings, score, contribution_ratios, cumulative_contribution_ratios
+            )
+        )
+
+
+# SparsePCAで次元削減を行うクラス
+class SparsePCAAsDataFrame(BaseEstimator, TransformerMixin):
+    def __init__(self, selector=None, n_components:float=0.95):
+        self.selector = selector
+        self.sparsepca = SparsePCA(n_components=n_components, random_state=config.SEED)
+
+    def fit(self, X, y=None):
+        self.sparsepca.fit(X)
+        return self
+
+    def transform(self, X):
+        return pd.DataFrame(
+            self.sparsepca.transform(X),
+            index=X.index,
+            columns=self.sparsepca.get_feature_names_out(),
+        )
+
+    def show_progress(self, X):
+        # 主成分負荷量の計算と表示
+        loadings = pd.DataFrame(self.sparsepca.components_.T, index=X.columns)
+        # 主成分スコアの計算
+        score = pd.DataFrame(self.sparsepca.transform(X), index=X.index)    
+        print(
+            "loadings: {0}, score: {1} ".format(
+                loadings, score
             )
         )
