@@ -102,7 +102,7 @@ class PCAAsDataFrame(BaseEstimator, TransformerMixin):
 class IncrementalPCAAsDataFrame(BaseEstimator, TransformerMixin):
     def __init__(self, selector=None, n_components:float=0.95):
         self.selector = selector
-        self.incrementalpca = IncrementalPCA(n_components=n_components, random_state=config.SEED)
+        self.incrementalpca = IncrementalPCA(n_components=n_components)
 
     def fit(self, X, y=None):
         self.incrementalpca.fit(X)
