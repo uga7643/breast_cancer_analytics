@@ -11,6 +11,7 @@ from sklearn.preprocessing import  StandardScaler, MinMaxScaler
 from sklearn.decomposition import PCA
 from sklearn.decomposition import IncrementalPCA
 from sklearn.decomposition import SparsePCA
+from sklearn.decomposition import MiniBatchSparsePCA
 import config
 
 """
@@ -154,6 +155,34 @@ class SparsePCAAsDataFrame(BaseEstimator, TransformerMixin):
         loadings = pd.DataFrame(self.sparsepca.components_.T, index=X.columns)
         # 主成分スコアの計算
         score = pd.DataFrame(self.sparsepca.transform(X), index=X.index)    
+        print(
+            "loadings: {0}, score: {1} ".format(
+                loadings, score
+            )
+        )
+
+# MiniBatchSparsePCAで次元削減を行うクラス
+class MiniBatchSparsePCAAsDataFrame(BaseEstimator, TransformerMixin):
+    def __init__(self, selector=None, n_components:float=0.95):
+        self.selector = selector
+        self.mbsparsepca = MiniBatchSparsePCA(n_components=n_components, random_state=config.SEED)
+
+    def fit(self, X, y=None):
+        self.mbsparsepca.fit(X)
+        return self
+
+    def transform(self, X):
+        return pd.DataFrame(
+            self.mbsparsepca.transform(X),
+            index=X.index,
+            columns=self.mbsparsepca.get_feature_names_out(),
+        )
+
+    def show_progress(self, X):
+        # 主成分負荷量の計算と表示
+        loadings = pd.DataFrame(self.mbsparsepca.components_.T, index=X.columns)
+        # 主成分スコアの計算
+        score = pd.DataFrame(self.mbsparsepca.transform(X), index=X.index)    
         print(
             "loadings: {0}, score: {1} ".format(
                 loadings, score
